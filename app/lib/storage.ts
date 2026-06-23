@@ -25,6 +25,11 @@ export function getItem(id: string): ShochuItem | undefined {
   return getItems().find((item) => item.id === id)
 }
 
+export function updateItem(updated: ShochuItem): void {
+  const items = getItems().map((item) => (item.id === updated.id ? updated : item))
+  saveItems(items)
+}
+
 export function deleteItem(id: string): void {
   const items = getItems().filter((item) => item.id !== id)
   saveItems(items)

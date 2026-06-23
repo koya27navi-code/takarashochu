@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
+import Link from "next/link"
 import { getItem, deleteItem } from "../../lib/storage"
 import { ShochuItem } from "../../lib/types"
 
@@ -64,12 +65,20 @@ export default function DetailPage() {
         >
           ‹
         </button>
-        {/* お気に入り */}
-        {item.favorite && (
-          <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center shadow text-lg">
-            ❤️
-          </div>
-        )}
+        {/* 右上：お気に入り＋編集 */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          {item.favorite && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-full w-9 h-9 flex items-center justify-center shadow text-lg">
+              ❤️
+            </div>
+          )}
+          <Link
+            href={`/zukan/${id}/edit`}
+            className="bg-white/80 backdrop-blur-sm rounded-full px-3 h-9 flex items-center justify-center shadow text-gray-900 text-sm font-semibold"
+          >
+            編集
+          </Link>
+        </div>
       </div>
 
       {/* 詳細情報 */}
