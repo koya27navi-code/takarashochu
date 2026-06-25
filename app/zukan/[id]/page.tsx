@@ -4,12 +4,15 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { getItem, deleteItem } from "../../lib/storage"
+import { deleteItem as deleteItemRemote } from "../../lib/repositories/shochuRepository"
+import { useAuth } from "../../lib/useAuth"
 import { ShochuItem } from "../../lib/types"
 
 export default function DetailPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { user } = useAuth()
 
   const [item, setItem] = useState<ShochuItem | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -21,8 +24,15 @@ export default function DetailPage() {
     setMounted(true)
   }, [id])
 
-  function handleDelete() {
+  async function handleDelete() {
     deleteItem(id)
+    if (user) {
+      try {
+        await deleteItemRemote(id, user.id)
+      } catch {
+        // Supabase 削除に失敗しても localStorage の削除は完了済み
+      }
+    }
     router.push("/zukan")
   }
 

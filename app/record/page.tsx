@@ -3,9 +3,13 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { addItem, generateId } from "../lib/storage"
+import { createItem as createItemRemote } from "../lib/repositories/shochuRepository"
+import { useAuth } from "../lib/useAuth"
+import type { ShochuItem } from "../lib/types"
 
 export default function RecordPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState("")
@@ -28,10 +32,10 @@ export default function RecordPage() {
     reader.readAsDataURL(file)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) return
     setSaving(true)
-    addItem({
+    const item: ShochuItem = {
       id: generateId(),
       name: name.trim(),
       flavor: flavor.trim() || undefined,
@@ -42,7 +46,15 @@ export default function RecordPage() {
       imageUrl: imageUrl || undefined,
       favorite,
       createdAt: new Date().toISOString(),
-    })
+    }
+    addItem(item)
+    if (user) {
+      try {
+        await createItemRemote(item, user.id)
+      } catch {
+        // Supabase 保存に失敗しても localStorage 保存は完了済み
+      }
+    }
     router.push("/zukan")
   }
 

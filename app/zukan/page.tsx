@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { getItems } from "../lib/storage"
+import { getItems, saveItems } from "../lib/storage"
+import { getItems as getItemsRemote } from "../lib/repositories/shochuRepository"
+import { useAuth } from "../lib/useAuth"
 import { ShochuItem } from "../lib/types"
 
 const TOTAL_SLOTS = 50
@@ -10,11 +12,35 @@ const TOTAL_SLOTS = 50
 export default function ZukanPage() {
   const [items, setItems] = useState<ShochuItem[]>([])
   const [mounted, setMounted] = useState(false)
+  const { user, authInitialized } = useAuth()
 
   useEffect(() => {
-    setItems(getItems())
-    setMounted(true)
-  }, [])
+    if (!authInitialized) return
+
+    let active = true
+
+    async function load() {
+      if (user) {
+        const { data } = await getItemsRemote(user.id)
+        if (data) {
+          if (active) setItems(data)
+          saveItems(data)
+          if (active) setMounted(true)
+          return
+        }
+      }
+      if (active) {
+        setItems(getItems())
+        setMounted(true)
+      }
+    }
+
+    load()
+
+    return () => {
+      active = false
+    }
+  }, [user, authInitialized])
 
   if (!mounted) return null
 

@@ -3,11 +3,15 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { getItem, updateItem } from "../../../lib/storage"
+import { updateItem as updateItemRemote } from "../../../lib/repositories/shochuRepository"
+import { useAuth } from "../../../lib/useAuth"
+import type { ShochuItem } from "../../../lib/types"
 
 export default function EditPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { user } = useAuth()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [mounted, setMounted] = useState(false)
@@ -51,10 +55,10 @@ export default function EditPage() {
     reader.readAsDataURL(file)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) return
     setSaving(true)
-    updateItem({
+    const item: ShochuItem = {
       id,
       name: name.trim(),
       flavor: flavor.trim() || undefined,
@@ -65,7 +69,15 @@ export default function EditPage() {
       imageUrl: imageUrl || undefined,
       favorite,
       createdAt,
-    })
+    }
+    updateItem(item)
+    if (user) {
+      try {
+        await updateItemRemote(item, user.id)
+      } catch {
+        // Supabase 更新に失敗しても localStorage 保存は完了済み
+      }
+    }
     router.push(`/zukan/${id}`)
   }
 

@@ -2,9 +2,6 @@ import { supabase } from "../supabase"
 import type { ShochuItem } from "../types"
 import type { ShochuItemRow, ShochuItemInsert, ShochuItemUpdate } from "../database.types"
 
-// 認証実装後に auth.uid() へ置き換える
-const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
-
 type Result<T> = { data: T; error: null } | { data: null; error: string }
 
 // ------------------------------------------------------------
@@ -48,10 +45,10 @@ function toItem(row: ShochuItemRow): ShochuItem {
 // Repository functions
 // ------------------------------------------------------------
 
-export async function createItem(item: ShochuItem): Promise<Result<ShochuItem>> {
+export async function createItem(item: ShochuItem, userId: string): Promise<Result<ShochuItem>> {
   if (!supabase) return { data: null, error: "Supabase is not configured" }
 
-  const row = toRow(item, DEMO_USER_ID)
+  const row = toRow(item, userId)
   const { data, error } = await supabase
     .from("shochu_items")
     .insert(row)
@@ -62,7 +59,7 @@ export async function createItem(item: ShochuItem): Promise<Result<ShochuItem>> 
   return { data: toItem(data), error: null }
 }
 
-export async function updateItem(item: ShochuItem): Promise<Result<ShochuItem>> {
+export async function updateItem(item: ShochuItem, userId: string): Promise<Result<ShochuItem>> {
   if (!supabase) return { data: null, error: "Supabase is not configured" }
 
   const update: ShochuItemUpdate = {
@@ -80,7 +77,7 @@ export async function updateItem(item: ShochuItem): Promise<Result<ShochuItem>> 
     .from("shochu_items")
     .update(update)
     .eq("id", item.id)
-    .eq("user_id", DEMO_USER_ID)
+    .eq("user_id", userId)
     .select()
     .single()
 
@@ -88,26 +85,26 @@ export async function updateItem(item: ShochuItem): Promise<Result<ShochuItem>> 
   return { data: toItem(data), error: null }
 }
 
-export async function deleteItem(id: string): Promise<Result<true>> {
+export async function deleteItem(id: string, userId: string): Promise<Result<true>> {
   if (!supabase) return { data: null, error: "Supabase is not configured" }
 
   const { error } = await supabase
     .from("shochu_items")
     .delete()
     .eq("id", id)
-    .eq("user_id", DEMO_USER_ID)
+    .eq("user_id", userId)
 
   if (error) return { data: null, error: error.message }
   return { data: true, error: null }
 }
 
-export async function getItems(): Promise<Result<ShochuItem[]>> {
+export async function getItems(userId: string): Promise<Result<ShochuItem[]>> {
   if (!supabase) return { data: null, error: "Supabase is not configured" }
 
   const { data, error } = await supabase
     .from("shochu_items")
     .select("*")
-    .eq("user_id", DEMO_USER_ID)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
 
   if (error) return { data: null, error: error.message }
